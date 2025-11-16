@@ -1,0 +1,23 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+*.sh text eol=lf
+*.c  text eol=lf
+*.h  text eol=lf
+*.bat text eol=crlf
+=======
+* text=auto eol=lf
+>>>>>>> 5ad12dc6c8165195f08c1b00625592a003626abf
+=======
+*.py text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.md text eol=lf
+*.s text eol=lf
+*.sh text eol=lf
+*.txt text eol=lf
+Makefile text eol=lf
+>>>>>>> a7a1bda2d0eb8bc6cce35cb026f83b28d9d2bbdf
+=======
+* text=auto eol=lf
+>>>>>>> 75dcc0fd53f440b54e3d71f6d8472ed501ec26c6
