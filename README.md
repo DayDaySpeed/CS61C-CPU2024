@@ -362,19 +362,15 @@ bash test.sh test_partial_store
 **control_logic.circ文件没有单独的测试方式，你需要实现单周期CPU后再运行以下命令进行测试**
 
 ```bash
-Registers:              bash test.sh test_integration_all_regs"
-Branches:               bash test.sh test_integration_branch"
-Immediates:             bash test.sh test_integration_immediates"
-Jumps:                  bash test.sh test_integration_jump"
-lui:                    bash test.sh test_integration_lui"
-Memory:                 bash test.sh test_integration_mem"
-Basic programs:         bash test.sh test_integration_programs"
+Registers:              bash test.sh test_integration_all_regs
+Branches:               bash test.sh test_integration_branch
+Immediates:             bash test.sh test_integration_immediates
+Jumps:                  bash test.sh test_integration_jump
+lui:                    bash test.sh test_integration_lui
+Memory:                 bash test.sh test_integration_mem
+Basic programs:         bash test.sh test_integration_programs
 如果以上测试未通过，那么多半是control_logic.circ的问题
 ```
-
-
-
-
 
 
 
@@ -393,4 +389,18 @@ Basic programs:         bash test.sh test_integration_programs"
 实现后如图所示
 
 ![pipelineCPU](images/pipelineCPU.png)
+
+### 测试
+
+在单周期测试的基础上加上-p参数
+
+```bash
+Registers:              bash test.sh test_integration_all_regs -p
+Branches:               bash test.sh test_integration_branch -p
+Immediates:             bash test.sh test_integration_immediates -p
+Jumps:                  bash test.sh test_integration_jump -p
+lui:                    bash test.sh test_integration_lui -p
+Memory:                 bash test.sh test_integration_mem -p
+Basic programs:         bash test.sh test_integration_programs -p
+```
 
