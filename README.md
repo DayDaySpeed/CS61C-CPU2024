@@ -362,15 +362,15 @@ Basic programs:         bash test.sh test_integration_programs"
 
 ### 单周期CPU
 
-![CPU](images\CPU.png)
+![CPU](images/CPU.png)
 
 实现如图所示的结构，只需要将对应组件相连
 
-实现后如图所示![Single-CycleCPU](D:\develop\vscode\projects\CS61C-CPU2024\images\Single-CycleCPU.png)
+实现后如图所示![Single-CycleCPU](images/Single-CycleCPU.png)
 
 ### 二级流水线CPU
 
 实现后如图所示
 
-![pipelineCPU](images\pipelineCPU.png)
+![pipelineCPU](images/pipelineCPU.png)
 
