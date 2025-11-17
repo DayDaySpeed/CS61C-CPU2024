@@ -149,12 +149,6 @@
 
 
 
-​	![CPU](images\CPU.png)
-
-
-
-
-
 # 任务：
 
 ## alu.circ
