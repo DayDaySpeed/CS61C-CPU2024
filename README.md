@@ -1,9 +1,5 @@
 # RISC-V所有寄存器名称及其ABI名称
 
-
-
-
-
 | 编号 | 名称（xN） | ABI 名称                         | 用途说明                   |
 | ---- | ---------- | -------------------------------- | -------------------------- |
 | x0   | zero       | zero                             | 常数 0，读取为 0，写入无效 |
@@ -55,9 +51,9 @@
 
 
 
-# **R-type | I-type | S-type | B-type | U-type | J-type** 
 
-## **1.在32位中的字段布局及位位置说明**
+
+# 指令在32位中的字段布局
 
 | 类型       | 字段布局（从左到右）                                         | 位位置说明                                                   |
 | ---------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -74,9 +70,9 @@
 
 
 
-# R,I,S,B,U,J指令总揽
+# 指令
 
-
+你需要让CPU能实现如下全部指令
 
 ##  I-type 指令（立即数运算 / load / jalr ）
 
@@ -153,23 +149,15 @@
 
 
 
-​	
+​	![CPU](images\CPU.png)
 
 
-
-
-
-
-
-
-
-![](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20251115120305919.png)
 
 
 
 # 任务：
 
-## ALU
+## alu.circ
 
 | ALUSel Value | Instruction                              |
 | ------------ | ---------------------------------------- |
@@ -200,40 +188,33 @@ bash test.sh test_alu
 
 
 
-## RegFile
+## RegFile.circ
 
-这个任务要求你在 **Logisim** 中实现一个 **寄存器文件（Register File）**，它是 CPU datapath 的核心存储单元。寄存器文件保存所有通用寄存器（RISC-V RV32I 中有 32 个寄存器，每个 32 位），并提供读写接口。
+输入信号（Input）
 
-### ✅ 你需要实现的内容
+| 信号名称     | 位宽 | 说明                                                       |
+| ------------ | ---- | ---------------------------------------------------------- |
+| `ReadIndex1` | 5    | 指定要读取的第一个寄存器编号，其值将输出到 `ReadData1`     |
+| `ReadIndex2` | 5    | 指定要读取的第二个寄存器编号，其值将输出到 `ReadData2`     |
+| `WriteIndex` | 5    | 指定要写入的寄存器编号（在时钟上升沿且 `RegWEn=1` 时生效） |
+| `WriteData`  | 32   | 要写入寄存器的数据（在时钟上升沿且 `RegWEn=1` 时生效）     |
+| `RegWEn`     | 1    | 写使能信号，为 1 时允许在时钟上升沿写入寄存器              |
+| `clk`        | 1    | 时钟信号                                                   |
 
-#### 1. 寄存器数量与位宽
+ 输出信号（Output）
 
-- 共 **32 个寄存器**（x0 ~ x31）
-- 每个寄存器 **32 位宽**
-
-#### 2. 特殊寄存器规则
-
-- **x0 永远为 0**：写入时必须忽略，读出时始终返回 0
-
-#### 3. 输入端口
-
-- `ReadReg1`：第一个读寄存器编号（5 位）
-- `ReadReg2`：第二个读寄存器编号（5 位）
-- `WriteReg`：写寄存器编号（5 位）
-- `WriteData`：写入的数据（32 位）
-- `RegWrite`：写使能信号（1 位）
-
-#### 4. 输出端口
-
-- `ReadData1`：第一个读寄存器的值（32 位）
-- `ReadData2`：第二个读寄存器的值（32 位）
-
-#### 5. 功能要求
-
-- **双端口读**：可以同时读两个寄存器
-- **单端口写**：每个周期最多写一个寄存器
-- 写操作在时钟上升沿生效（同步写）
-- 读操作是组合逻辑（异步读）
+| 信号名称    | 位宽 | 说明                            |
+| ----------- | ---- | ------------------------------- |
+| `ReadData1` | 32   | `ReadIndex1` 指定的寄存器的值   |
+| `ReadData2` | 32   | `ReadIndex2` 指定的寄存器的值   |
+| `ra`        | 32   | 寄存器 x1（返回地址寄存器）的值 |
+| `sp`        | 32   | 寄存器 x2（堆栈指针）的值       |
+| `t0`        | 32   | 寄存器 x5 的值                  |
+| `t1`        | 32   | 寄存器 x6 的值                  |
+| `t2`        | 32   | 寄存器 x7 的值                  |
+| `s0`        | 32   | 寄存器 x8 的值                  |
+| `s1`        | 32   | 寄存器 x9 的值                  |
+| `a0`        | 32   | 寄存器 x10 的值                 |
 
 ### 测试
 
@@ -245,23 +226,19 @@ bash test.sh test_regfile
 
 
 
-## imm-gen
+## imm-gen.circ
 
 这个任务要求你在 **Logisim** 中实现一个 **立即数生成器（Immediate Generator）**，它的作用是： 从指令的不同字段中提取出 **立即数（immediate）**，并进行正确的 **符号扩展**，供 ALU 或其他单元使用。
 
-#### 不同指令类型的立即数格式
+不同指令类型的立即数格式
 
-
-
-| 类型 | ImmSel (默认) | Bits 31-20  | Bits 19-12  | Bit 11      | Bits 10-5   | Bits 4-1 | Bit 0 |
-| ---- | ------------- | ----------- | ----------- | ----------- | ----------- | -------- | ----- |
-| I    | 0b000         | inst[31]    | inst[30:20] |             |             |          |       |
-| S    | 0b001         | inst[31]    |             | inst[30:25] | inst[11:7]  |          |       |
-| B    | 0b010         | inst[31]    | inst[7]     | inst[30:25] | inst[11:8]  |          | 0     |
-| U    | 0b011         | inst[31:12] |             |             |             |          | 0     |
-| J    | 0b100         | inst[31]    | inst[19:12] | inst[20]    | inst[30:21] |          | 0     |
-
-
+| 指令类型   | ImmSel | 立即数构造方式（按位拼接）                                   | 说明          |
+| ---------- | ------ | ------------------------------------------------------------ | ------------- |
+| **I-type** | `000`  | `imm[11:0] = inst[31:20]`                                    | **符号扩展**  |
+| **S-type** | `001`  | `imm[11:5] = inst[31:25]`<br>`imm[4:0] = inst[11:7]`         | **符号扩展**  |
+| **B-type** | `010`  | `imm[12] = inst[31]`<br>`imm[11] = inst[7]`<br>`imm[10:5] = inst[30:25]`<br>`imm[4:1] = inst[11:8]`<br>`imm[0] = 0` | **符号扩展**  |
+| **U-type** | `011`  | `imm[31:12] = inst[31:12]`<br>`imm[11:0] = 0`                | **左移 12位** |
+| **J-type** | `100`  | `imm[20] = inst[31]`<br>`imm[19:12] = inst[19:12]`<br>`imm[11] = inst[20]`<br>`imm[10:1] = inst[30:21]`<br>`imm[0] = 0` | **符号扩展**  |
 
 ### 测试
 
@@ -271,7 +248,7 @@ bash test.sh test_imm_gen
 
 
 
-# branch_comp
+## branch_comp.circ
 
 | 信号名称 | 方向 | 位宽 | 描述                                           |
 | -------- | ---- | ---- | ---------------------------------------------- |
@@ -281,345 +258,15 @@ bash test.sh test_imm_gen
 | BrEq     | 输出 | 1    | 若两个值相等则置为 1                           |
 | BrLt     | 输出 | 1    | 若 rs1 的值小于 rs2 的值则置为 1               |
 
-
-
-
-
-
-
-## Task4
-
-这一部分要求你在 **Logisim** 中把之前实现的各个组件（ALU、RegFile、Immediate Generator、PC 等）组合起来，形成一个完整的 **单周期 CPU datapath**。
-
-换句话说，Task 4 是把你前面做的零件拼装成一台能跑 RISC-V RV32I 指令的处理器。
-
-### ✅ 你需要实现的内容
-
-#### 1. 主要组件
-
-- **PC（程序计数器）**：保存当前指令地址
-- **IMEM（指令存储器）**：根据 PC 取出指令
-- **RegFile（寄存器文件）**：提供两个源操作数，支持写回
-- **Immediate Generator**：生成立即数
-- **ALU**：执行算术逻辑运算
-- **DMEM（数据存储器）**：用于 load/store
-- **控制逻辑（Control ROM）**：根据 opcode/funct3/funct7 生成控制信号
-
-#### 2. 关键控制信号
-
-- **PCSel**：决定下一条 PC（顺序、跳转、寄存器跳转）
-- **ImmSel**：选择立即数类型（I/S/B/U/J）
-- **ALUSel**：选择 ALU 运算
-- **RegWEn**：寄存器写使能
-- **MemRW**：内存读/写控制
-- **WBSel**：决定写回寄存器的数据来源（ALU结果 / 内存数据 / PC+4）
-
-#### 3. 数据流（单周期 CPU）
-
-1. **取指**：PC → IMEM → Instruction
-2. **解码**：Instruction → RegFile (rs1, rs2, rd) + ImmGen
-3. **执行**：ALU ← (RegFile数据, ImmGen数据)
-4. **访存**：ALU结果作为地址 → DMEM（读/写）
-5. **写回**：结果（ALU/DMEM/PC+4） → RegFile[rd]
-
-#### 4. 特殊要求
-
-- **x0 恒为 0**（寄存器文件已保证）
-- **立即数拼接正确**（ImmGen 已保证）
-- **分支/跳转正确更新 PC**
-- **控制信号来自 ROM**（你需要写一个控制信号表）
-
-### 🧪 测试方式
-
-运行集成测试：
-
-bash
-
-```
-bash test.sh test_integration_basic
-bash test.sh test_integration_branch
-```
-
-### ✅ 总结口诀
-
-> **PC取指，Reg读数，Imm扩展，ALU算，Mem访存，WB写回；控制信号全靠ROM。**
-
-
-
-## Task 5 (I-type Instructions)
-
-这一部分要求你在 **流水线 CPU** 中实现 **I-type 指令**。I-type 指令是 RISC-V RV32I 中最常见的一类，主要包括：
-
-- 算术立即数指令：`addi`, `slti`, `sltiu`
-- 逻辑立即数指令：`xori`, `ori`, `andi`
-- 移位立即数指令：`slli`, `srli`, `srai`
-- 跳转指令：`jalr`
-- Load 指令：`lb`, `lh`, `lw`, `lbu`, `lhu`
-
-这些指令都使用 **I-type 格式**，即立即数在指令的 `imm[11:0] = instr[31:20]` 字段。
-
-### ✅ 你需要实现的内容
-
-#### 1. 算术/逻辑立即数指令
-
-- **addi**: `R[rd] ← R[rs1] + imm`
-- **slti**: `R[rd] ← (R[rs1] < imm) ? 1 : 0`（有符号比较）
-- **sltiu**: `R[rd] ← (R[rs1] < imm) ? 1 : 0`（无符号比较）
-- **xori/ori/andi**: 按位逻辑运算
-
-#### 2. 移位立即数指令
-
-- **slli**: `R[rd] ← R[rs1] << shamt`
-- **srli**: `R[rd] ← R[rs1] >> shamt`（逻辑右移）
-- **srai**: `R[rd] ← R[rs1] >>> shamt`（算术右移）
-  - 注意：移位量 `shamt = instr[24:20]`
-  - `srai` 需要检查 `funct7 = 0x20`
-
-#### 3. 跳转指令
-
-- **jalr**: `PC ← (R[rs1] + imm) & ~1`，同时 `R[rd] ← PC + 4`
-  - 注意 PC 对齐：最低位清零
-
-#### 4. Load 指令
-
-- **lb/lh/lw**: 从内存读数据并符号扩展
-- **lbu/lhu**: 从内存读数据并零扩展
-- 地址计算：`MemAddr = R[rs1] + imm`
-
-### 🛠️ 实现步骤
-
-1. **Immediate Generator**
-   - 提取 `instr[31:20]` → 符号扩展到 32 位
-   - 对移位指令，立即数只取低 5 位（shamt）
-2. **ALU 控制**
-   - 根据 `opcode = 0x13`（算术/逻辑立即数）和 `funct3`/`funct7` 选择 ALU 运算
-   - 对 `jalr`，PCSel = 2（寄存器跳转）
-3. **寄存器文件**
-   - `rs1` 提供操作数
-   - `rd` 写回结果（除非是 store）
-4. **数据存储器**
-   - 对 load 指令，使用 `partial_load` 电路处理字节/半字提取和扩展
-
-### 🧪 测试方式
-
-运行 I-type 指令测试：
-
-bash
-
-```
-bash test.sh test_integration_i_type -p
-```
-
-### ✅ 总结口诀
-
-> **I型指令：立即数在高位，算术逻辑移位跳转都靠它；jalr 改PC，load要扩展。**
-
-
-
-##  **Task 6 (R-type Instructions)** 
-
-这一部分要求你在 **流水线 CPU** 中实现 **R-type 指令**。这些指令是 RISC-V RV32I 的核心算术逻辑指令，操作数来自寄存器，不涉及立即数或内存。
-
-### ✅ 你需要实现的内容
-
-#### 1. R-type 指令格式
-
-- **opcode = 0x33**
-- 字段：
-  - `rd`：目标寄存器
-  - `rs1`, `rs2`：源寄存器
-  - `funct3`, `funct7`：决定具体运算
-
-#### 2. 支持的指令
-
-你需要实现以下 R-type 指令：
-
-| 指令 | funct3 | funct7  | 运算说明                                      |      |
-| ---- | ------ | ------- | --------------------------------------------- | ---- |
-| add  | 000    | 0000000 | `R[rd] ← R[rs1] + R[rs2]`                     |      |
-| sub  | 000    | 0100000 | `R[rd] ← R[rs1] - R[rs2]`                     |      |
-| sll  | 001    | 0000000 | `R[rd] ← R[rs1] << R[rs2][4:0]`               |      |
-| slt  | 010    | 0000000 | `R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0`（有符号） |      |
-| sltu | 011    | 0000000 | `R[rd] ← (R[rs1] < R[rs2]) ? 1 : 0`（无符号） |      |
-| xor  | 100    | 0000000 | `R[rd] ← R[rs1] ^ R[rs2]`                     |      |
-| srl  | 101    | 0000000 | `R[rd] ← R[rs1] >> R[rs2][4:0]`（逻辑右移）   |      |
-| sra  | 101    | 0100000 | `R[rd] ← R[rs1] >>> R[rs2][4:0]`（算术右移）  |      |
-| or   | 110    | 0000000 | `R[rd] ← R[rs1] | R[rs2]`                     |      |
-| and  | 111    | 0000000 | `R[rd] ← R[rs1] & R[rs2]`                     |      |
-
-### 🧪 测试方式
-
-运行 R-type 指令测试：
+### 测试
 
 ```bash
-bash test.sh test_integration_r_type -p
+bash test.sh test_branch_comp
 ```
 
-### ✅ 总结口诀
-
-> **R型指令：寄存器对寄存器，funct3+funct7 定义运算，结果写回 rd。**
 
 
-
-## Task 7 (B-type Instructions)
-
-这一部分要求你在 **流水线 CPU** 中实现 **B-type 指令**，也就是 **条件分支指令**。这些指令根据寄存器比较结果，决定是否更新 PC 为跳转目标地址。
-
-### ✅ 你需要实现的内容
-
-#### 1. B-type 指令格式
-
-- **opcode = 0x63**
-- 字段：
-  - `rs1`, `rs2`：源寄存器
-  - `funct3`：决定比较类型
-  - `imm[12:1]`：分支偏移量（由 Immediate Generator 生成，最低位固定为 0）
-
-#### 2. 支持的指令
-
-| 指令 | funct3 | 运算说明                               |
-| ---- | ------ | -------------------------------------- |
-| beq  | 000    | 如果 `R[rs1] == R[rs2]` → 跳转         |
-| bne  | 001    | 如果 `R[rs1] != R[rs2]` → 跳转         |
-| blt  | 100    | 如果 `R[rs1] < R[rs2]`（有符号）→ 跳转 |
-| bge  | 101    | 如果 `R[rs1] ≥ R[rs2]`（有符号）→ 跳转 |
-| bltu | 110    | 如果 `R[rs1] < R[rs2]`（无符号）→ 跳转 |
-| bgeu | 111    | 如果 `R[rs1] ≥ R[rs2]`（无符号）→ 跳转 |
-
-### 🛠️ 实现步骤
-
-1. **Immediate Generator**
-   - 拼接 B-type 立即数： `imm[12] = instr[31]`   `imm[11] = instr[7]`   `imm[10:5] = instr[30:25]`   `imm[4:1] = instr[11:8]`   `imm[0] = 0`
-   - 符号扩展到 32 位
-2. **ALU 比较逻辑**
-   - ALU 或专门比较器判断 `rs1` 与 `rs2` 的关系
-   - 根据 `funct3` 选择比较方式（等于、不等、有符号/无符号大小）
-3. **PC 更新逻辑**
-   - 如果条件成立：`PC ← PC + imm`
-   - 否则：`PC ← PC + 4`
-   - 控制信号：`PCSel = 1` 表示分支跳转
-4. **流水线 flush**
-   - 如果分支成立，IF 阶段已经取的下一条指令是错的 → 必须 flush（替换为 `nop`）
-
-### 🧪 测试方式
-
-运行 B-type 指令测试：
-
-bash
-
-```
-bash test.sh test_integration_b_type -p
-```
-
-### ✅ 总结口诀
-
-> **B型分支：比较 rs1/rs2，条件成立跳转 PC+imm，否则顺序 PC+4；分支要 flush。**
-
-
-
-
-
-## Task 8 (Loading and Storing)
-
-这一部分要求你在 **流水线 CPU** 中实现 **Load 和 Store 指令**，也就是内存访问指令。它们属于 I-type（Load）和 S-type（Store），需要正确处理地址计算、数据读写，以及部分字节/半字的扩展。
-
-### ✅ 你需要实现的内容
-
-#### 1. Load 指令（opcode = `0x03`）
-
-- **lb**: `R[rd] ← SignExt(Mem[R[rs1] + imm][7:0])`
-- **lh**: `R[rd] ← SignExt(Mem[R[rs1] + imm][15:0])`
-- **lw**: `R[rd] ← Mem[R[rs1] + imm]`
-- **lbu**: `R[rd] ← ZeroExt(Mem[R[rs1] + imm][7:0])`
-- **lhu**: `R[rd] ← ZeroExt(Mem[R[rs1] + imm][15:0])`
-
-📌 注意：
-
-- 地址计算：`MemAddr = R[rs1] + imm`
-- 使用 **partial_load.circ** 提取正确字节并扩展
-
-#### 2. Store 指令（opcode = `0x23`）
-
-- **sb**: `Mem[R[rs1] + imm] ← R[rs2][7:0]`
-- **sh**: `Mem[R[rs1] + imm] ← R[rs2][15:0]`
-- **sw**: `Mem[R[rs1] + imm] ← R[rs2]`
-
-📌 注意：
-
-- 地址计算：`MemAddr = R[rs1] + imm`
-- 使用 **partial_store.circ** 插入正确字节并生成写掩码
-
-#### 3. Datapath 要点
-
-- ALU 用来计算内存地址：`R[rs1] + imm`
-- DMEM 接收地址和数据
-- Load 指令结果通过 **WBSel** 写回寄存器
-- Store 指令只写内存，不写寄存器
-- 控制信号：
-  - `MemRW = 1` → 写内存
-  - `MemRW = 0` → 读内存
-  - `WBSel = Mem` → 写回寄存器来自内存
-
-#### 4. 流水线 Hazard
-
-- Load 指令的结果在 EX 阶段还没准备好，下一条指令可能需要 → 需要 **stall 或 forward**
-- Store 指令只影响内存，不需要写回寄存器，但要保证地址和数据在同一周期送到 DMEM
-
-### 🧪 测试方式
-
-运行 Load/Store 指令测试：
-
-bash
-
-```
-bash test.sh test_integration_load_store -p
-```
-
-### ✅ 总结口诀
-
-> **Load 读内存写回寄存器，Store 写寄存器数据到内存；地址靠 ALU，字节靠 partial。**
-
-
-
-
-
-# `partial_load.circ` **和** `partial_store.circ`
-
-为什么需要 partial load/store？
-
-在 RISC-V 中：
-
-- `lw` / `sw`：访问整个 32 位 word
-- `lh` / `sh`：访问 16 位 half-word
-- `lb` / `sb`：访问 8 位 byte
-
-但 Logisim 的 DMEM 总是一次返回/写入 **32 位对齐的 4 字节块**，你必须从中**提取或插入部分字节**。
-
-## 🔹 `partial_load.circ`：从 DMEM 中提取正确的字节
-
-#### 输入：
-
-- `Instruction`：当前指令（用于识别是 `lb`, `lh`, `lw`）
-- `MemAddress`：原始地址（未对齐）
-- `DataFromMem`：DMEM 返回的 32 位数据
-
-#### 输出：
-
-- `DataToReg`：要写入寄存器的 32 位数据（带符号扩展）
-
-你需要根据：
-
-- 指令类型（通过 `funct3` 判断）
-- 地址的低两位（决定从哪一字节开始提取）
-
-来选择正确的字节并进行符号扩展。
-
-#### 示例：
-
-- `lb` 地址末尾是 `0b10` → 提取 `DataFromMem[23:16]` → `SignExt`
-- `lh` 地址末尾是 `0b01` → 提取 `DataFromMem[23:8]` → `SignExt`
-
-### 具体要求如下：
+## partial_load.circ
 
 | 信号名称    | 方向 | 位宽 | 描述                             |
 | ----------- | ---- | ---- | -------------------------------- |
@@ -639,33 +286,15 @@ bash test.sh test_integration_load_store -p
 |                    |      |        |        | 0b10              | SignExt(DataFromMem[31:16]) |
 | lw rd, offset(rs1) | I    | 0x03   | 0x2    | 0b00              | DataFromMem                 |
 
-## 🔹 `partial_store.circ`：将部分数据写入 DMEM
+### 测试
 
-#### 输入：
+```bash
+bash test.sh test_partial_load
+```
 
-- `Instruction`：当前指令（用于识别是 `sb`, `sh`, `sw`）
-- `MemAddress`：原始地址（未对齐）
-- `DataFromReg`：寄存器中的数据
-- `MemWEn`：是否启用写入
 
-#### 输出：
 
-- `DataToMem`：要写入 DMEM 的 32 位数据（正确插入目标字节）
-- `MemWriteMask`：4 位掩码，指示哪些字节要写入
-
-你需要根据：
-
-- 指令类型（通过 `funct3` 判断）
-- 地址的低两位（决定写入位置）
-
-来构造正确的 `DataToMem` 和 `MemWriteMask`
-
-#### 示例：
-
-- `sb` 地址末尾是 `0b11` → 把 `DataFromReg[7:0]` 放到 `DataToMem[31:24]`，掩码为 `0b1000`
-- `sh` 地址末尾是 `0b10` → 放到 `DataToMem[31:16]`，掩码为 `0b1100`
-
-## 具体要求如下：
+## partial_store.circ
 
 | 信号名称     | 方向 | 位宽 | 描述                                    |
 | ------------ | ---- | ---- | --------------------------------------- |
@@ -686,26 +315,17 @@ bash test.sh test_integration_load_store -p
 |                     |        | 0b10              | [31-16]=DataFromReg[15:0], [15-0]=0                    | 0b1100       |
 | sw rs2, offset(rs1) | 0x2    | 0b00              | [31-0]=DataFromReg                                     | 0b1111       |
 
-
-
-### 测试方式
+### 测试
 
 你可以运行以下命令测试你的子电路：
 
-bash
-
-```
-bash test.sh test_partial_load
+```bash
 bash test.sh test_partial_store
 ```
 
-> **DMEM 总是返回 32 位，你要提取或插入正确的字节；地址低两位决定位置，funct3 决定长度。**
 
 
-
-
-
-## 控制逻辑
+## control_logic.circ
 
 | 信号名称 | 位宽 | 目的                                                         |
 | -------- | ---- | ------------------------------------------------------------ |
@@ -718,3 +338,39 @@ bash test.sh test_partial_store
 | ALUSel   | 4    | 选择 ALU 的具体运算功能（见任务 1 的 ALU 功能映射表）        |
 | MemRW    | 1    | 若指令写入内存则为 1，否则为 0                               |
 | WBSel    | 2    | 选择写回寄存器的数据来源：来自 DMEM、ALU 输出或 PC+4         |
+
+**control_logic.circ文件没有单独的测试方式，你需要实现单周期CPU后再运行以下命令进行测试**
+
+```bash
+Registers:              bash test.sh test_integration_all_regs"
+Branches:               bash test.sh test_integration_branch"
+Immediates:             bash test.sh test_integration_immediates"
+Jumps:                  bash test.sh test_integration_jump"
+lui:                    bash test.sh test_integration_lui"
+Memory:                 bash test.sh test_integration_mem"
+Basic programs:         bash test.sh test_integration_programs"
+如果以上测试未通过，那么多半是control_logic.circ的问题
+```
+
+
+
+
+
+
+
+## CPU.circ
+
+### 单周期CPU
+
+![CPU](images\CPU.png)
+
+实现如图所示的结构，只需要将对应组件相连
+
+实现后如图所示![Single-CycleCPU](D:\develop\vscode\projects\CS61C-CPU2024\images\Single-CycleCPU.png)
+
+### 二级流水线CPU
+
+实现后如图所示
+
+![pipelineCPU](images\pipelineCPU.png)
+
