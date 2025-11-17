@@ -151,6 +151,32 @@
 
 # 任务：
 
+前提：	安装 Java 运行环境（JRE）
+				Logisim Evolution 是用 Java 编写的，需要 Java 支持
+
+​				推荐安装 Java 8 或更高版本
+
+​				可通过命令检查是否已安装：
+
+```bash
+java -version
+```
+
+如果没有安装，可以从 Oracle 官网 或 OpenJDK 下载。
+
+
+
+工具：运行project03/tools目录下的logisim-evolution.jar即可打开logisim
+			用logisim打开.circ文件
+
+在project03/tools目录下用bash运行，推荐用git bash(下载git后自带)
+
+```bash
+java -jar .\logisim-evolution.jar
+```
+
+
+
 ## alu.circ
 
 | ALUSel Value | Instruction                              |
